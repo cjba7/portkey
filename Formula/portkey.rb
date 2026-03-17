@@ -5,7 +5,7 @@ class Portkey < Formula
   sha256 "f58b42bf0a32dd2136c4e8aeebab95c4c5b58d5705947e656f95d58fdeeeba8b"
   license "MIT"
 
-  depends_on "direnv"
+  depends_on "direnv" => :recommended
 
   def install
     bin.install "bin/portkey"
