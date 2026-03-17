@@ -10,63 +10,58 @@ module Portkey
       "pg" => "DB_PORT"
     }.freeze
 
-    BEGIN_MARKER = "# BEGIN portkey"
-    END_MARKER = "# END portkey"
-
     module_function
 
     def env_key(service_name)
       SERVICE_KEY_MAP.fetch(service_name, "#{service_name.upcase}_PORT")
     end
 
-    def port_lines(project_name, project_data, export: true)
-      lines = []
-      seen = {}
+    def port_entries(project_data, export: true)
+      entries = {}
       project_data.each do |key, value|
         next if key == "path"
         next unless value.is_a?(Integer)
 
         k = env_key(key)
-        next if seen.key?(k)
-        seen[k] = true
+        next if entries.key?(k)
 
-        lines << if export
+        entries[k] = if export
           "export #{k}=#{value}"
         else
           "#{k}=#{value}"
         end
       end
-      lines
+      entries
     end
 
-    def generate_block(project_name, project_data, export: true)
-      lines = [BEGIN_MARKER]
-      lines << "# Project: #{project_name} — managed by portkey, do not edit"
-      lines.concat(port_lines(project_name, project_data, export: export))
-      lines << END_MARKER
-      lines.join("\n") + "\n"
-    end
+    def merge_content(existing_content, entries, export: true)
+      remaining = entries.dup
+      prefix = export ? "export " : ""
 
-    def merge_into_file(filepath, project_name, project_data, export: true)
-      block = generate_block(project_name, project_data, export: export)
-
-      if File.exist?(filepath)
-        content = File.read(filepath)
-        if content.include?(BEGIN_MARKER) && content.include?(END_MARKER)
-          # Replace existing portkey block
-          updated = content.sub(
-            /#{Regexp.escape(BEGIN_MARKER)}.*?#{Regexp.escape(END_MARKER)}\n?/m,
-            block
-          )
-          File.write(filepath, updated)
-        else
-          # Append portkey block
-          content += "\n" unless content.end_with?("\n") || content.empty?
-          File.write(filepath, content + "\n" + block)
+      lines = existing_content.lines.map do |line|
+        stripped = line.chomp
+        matched = remaining.detect do |key, _|
+          stripped.match?(/\A#{Regexp.escape(prefix)}#{Regexp.escape(key)}=/)
         end
-      else
-        File.write(filepath, block)
+
+        if matched
+          key, new_line = matched
+          remaining.delete(key)
+          "#{new_line}\n"
+        else
+          line
+        end
       end
+
+      # Append any keys that weren't already in the file
+      unless remaining.empty?
+        lines << "\n" if lines.any? && !lines.last.end_with?("\n")
+        remaining.each_value do |new_line|
+          lines << "#{new_line}\n"
+        end
+      end
+
+      lines.join
     end
 
     def write(project_name, project_data, mode: "envrc", run_direnv: true)
@@ -82,14 +77,18 @@ module Portkey
 
       if mode == "envrc" || mode == "both"
         envrc_path = File.join(expanded, ".envrc")
-        merge_into_file(envrc_path, project_name, project_data, export: true)
+        entries = port_entries(project_data, export: true)
+        existing = File.exist?(envrc_path) ? File.read(envrc_path) : ""
+        File.write(envrc_path, merge_content(existing, entries, export: true))
         direnv_allow(expanded) if run_direnv
         written << envrc_path
       end
 
       if mode == "dotenv" || mode == "both"
         dotenv_path = File.join(expanded, ".env")
-        merge_into_file(dotenv_path, project_name, project_data, export: false)
+        entries = port_entries(project_data, export: false)
+        existing = File.exist?(dotenv_path) ? File.read(dotenv_path) : ""
+        File.write(dotenv_path, merge_content(existing, entries, export: false))
         written << dotenv_path
       end
 
