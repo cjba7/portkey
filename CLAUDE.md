@@ -51,7 +51,7 @@ ruby -Ilib bin/portkey remove myapp
 - **Configurable output mode** (`envrc`, `dotenv`, or `both`) — set during `portkey init`, stored in `~/.portkey.yml` as the `mode` key
 - **`direnv` is a system dependency** for `envrc`/`both` modes, not managed by portkey. If direnv is not installed, `portkey apply` still writes the file(s) but prints a warning instead of running `direnv allow`
 - **Port blocks increment by 10** to leave room for future services per project
-- **Env files are owned by portkey** — it will overwrite them on `apply`. Do not manually edit `.envrc`/`.env` files in project directories; edit `~/.portkey.yml` instead
+- **Portkey manages a marked block** in `.envrc`/`.env` between `# BEGIN portkey` and `# END portkey` markers. Existing content outside the block is preserved. Do not edit inside the markers; edit `~/.portkey.yml` instead
 - **Dependency injection** in constructors (`config_path:`, `port_checker:`, `stdout:`, `stdin:`) for test isolation — tests never touch the real `~/.portkey.yml`
 - **Only `postgres` is special-cased** to `DB_PORT`. All other services use `NAME_PORT` (uppercased)
 - **Key deduplication** — each env var key appears only once per file; if two services map to the same key, the first wins
