@@ -1,0 +1,6 @@
+.envrc
+.env
+*.gem
+tmp/
+.DS_Store
+.claude/
