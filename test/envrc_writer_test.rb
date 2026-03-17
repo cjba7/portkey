@@ -94,7 +94,7 @@ class EnvrcWriterTest < Minitest::Test
   def test_write_envrc_mode_creates_envrc_file
     with_temp_project_dir do |dir|
       data = { "path" => dir, "app" => 3000, "postgres" => 5432 }
-      written = Portkey::EnvrcWriter.write("testapp", data, mode: "envrc")
+      written = Portkey::EnvrcWriter.write("testapp", data, mode: "envrc", run_direnv: false)
 
       assert_equal [File.join(dir, ".envrc")], written
       assert File.exist?(File.join(dir, ".envrc"))
@@ -108,7 +108,7 @@ class EnvrcWriterTest < Minitest::Test
   def test_write_dotenv_mode_creates_env_file
     with_temp_project_dir do |dir|
       data = { "path" => dir, "app" => 3000, "postgres" => 5432 }
-      written = Portkey::EnvrcWriter.write("testapp", data, mode: "dotenv")
+      written = Portkey::EnvrcWriter.write("testapp", data, mode: "dotenv", run_direnv: false)
 
       assert_equal [File.join(dir, ".env")], written
       assert File.exist?(File.join(dir, ".env"))
@@ -123,7 +123,7 @@ class EnvrcWriterTest < Minitest::Test
   def test_write_both_mode_creates_both_files
     with_temp_project_dir do |dir|
       data = { "path" => dir, "app" => 3000 }
-      written = Portkey::EnvrcWriter.write("testapp", data, mode: "both")
+      written = Portkey::EnvrcWriter.write("testapp", data, mode: "both", run_direnv: false)
 
       assert_equal 2, written.size
       assert File.exist?(File.join(dir, ".envrc"))
@@ -142,7 +142,7 @@ class EnvrcWriterTest < Minitest::Test
       File.write(File.join(dir, ".envrc"), "old content")
 
       data = { "path" => dir, "app" => 3000 }
-      Portkey::EnvrcWriter.write("testapp", data, mode: "envrc")
+      Portkey::EnvrcWriter.write("testapp", data, mode: "envrc", run_direnv: false)
 
       content = File.read(File.join(dir, ".envrc"))
       refute_includes content, "old content"
@@ -152,20 +152,21 @@ class EnvrcWriterTest < Minitest::Test
 
   def test_write_raises_if_no_path
     assert_raises(Portkey::Error) do
-      Portkey::EnvrcWriter.write("testapp", { "app" => 3000 })
+      Portkey::EnvrcWriter.write("testapp", { "app" => 3000 }, run_direnv: false)
     end
   end
 
   def test_write_raises_if_directory_missing
     assert_raises(Portkey::Error) do
-      Portkey::EnvrcWriter.write("testapp", { "path" => "/nonexistent/path", "app" => 3000 })
+      Portkey::EnvrcWriter.write("testapp", { "path" => "/nonexistent/path", "app" => 3000 }, run_direnv: false)
     end
   end
 
   def test_direnv_allow_failure_does_not_crash
     with_temp_project_dir do |dir|
       data = { "path" => dir, "app" => 3000 }
-      written = Portkey::EnvrcWriter.write("testapp", data, mode: "envrc")
+      # Explicitly test with run_direnv: true to verify graceful handling
+      written = Portkey::EnvrcWriter.write("testapp", data, mode: "envrc", run_direnv: true)
       assert File.exist?(written.first)
     end
   end

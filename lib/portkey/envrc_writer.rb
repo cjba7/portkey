@@ -56,7 +56,7 @@ module Portkey
       lines.join("\n") + "\n"
     end
 
-    def write(project_name, project_data, mode: "envrc")
+    def write(project_name, project_data, mode: "envrc", run_direnv: true)
       path = project_data["path"]
       raise Portkey::Error, "No path defined for project '#{project_name}'" unless path
 
@@ -70,7 +70,7 @@ module Portkey
       if mode == "envrc" || mode == "both"
         envrc_path = File.join(expanded, ".envrc")
         File.write(envrc_path, generate_envrc(project_name, project_data))
-        direnv_allow(expanded)
+        direnv_allow(expanded) if run_direnv
         written << envrc_path
       end
 
