@@ -41,16 +41,16 @@ cd ~/code/myapp
 portkey add myapp
 
 # 3. That's it! portkey auto-assigned ports and wrote the env file(s).
-#    Your shell now has APP_PORT, DB_PORT, REDIS_PORT set.
+#    Your shell now has APP_PORT, POSTGRES_PORT, REDIS_PORT set.
 echo $APP_PORT   # => 3000
-echo $DB_PORT    # => 5432
+echo $POSTGRES_PORT    # => 5432
 echo $REDIS_PORT # => 6379
 
 # 4. Register another project
 cd ~/code/otherapp
 portkey add otherapp
 # Ports are automatically incremented by 10:
-# APP_PORT=3010, DB_PORT=5442, REDIS_PORT=6389
+# APP_PORT=3010, POSTGRES_PORT=5442, REDIS_PORT=6389
 ```
 
 ## Commands
@@ -121,7 +121,7 @@ For each project, `portkey apply` writes env file(s) based on the configured mod
 # Project: myapp
 
 export APP_PORT=3000
-export DB_PORT=5432
+export POSTGRES_PORT=5432
 export REDIS_PORT=6379
 ```
 
@@ -131,13 +131,12 @@ export REDIS_PORT=6379
 # Project: myapp
 
 APP_PORT=3000
-DB_PORT=5432
+POSTGRES_PORT=5432
 REDIS_PORT=6379
 ```
 
 The environment variable name is derived from the service key:
-- `postgres` / `postgresql` / `pg` → `DB_PORT` (special case)
-- Everything else → `UPPERCASED_NAME_PORT` (e.g., `app` → `APP_PORT`, `redis` → `REDIS_PORT`, `memcached` → `MEMCACHED_PORT`)
+The environment variable name is simply `UPPERCASED_NAME_PORT` (e.g., `app` → `APP_PORT`, `postgres` → `POSTGRES_PORT`, `redis` → `REDIS_PORT`).
 
 Each key appears only once per file — if two services map to the same env var, the first wins.
 
@@ -156,7 +155,7 @@ In `envrc` mode (default), portkey writes `export KEY=VALUE` lines directly to `
 development:
   adapter: postgresql
   host: localhost
-  port: <%= ENV.fetch("DB_PORT", 5432) %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
   database: myapp_development
 ```
 
@@ -182,7 +181,7 @@ services:
   postgres:
     image: postgres:16
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
   redis:
     image: redis:7
     ports:

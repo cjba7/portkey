@@ -7,35 +7,12 @@ class EnvrcWriterTest < Minitest::Test
 
   # env_key mapping
 
-  def test_env_key_postgres_maps_to_db_port
-    assert_equal "DB_PORT", Portkey::EnvrcWriter.env_key("postgres")
-  end
-
-  def test_env_key_postgresql_maps_to_db_port
-    assert_equal "DB_PORT", Portkey::EnvrcWriter.env_key("postgresql")
-  end
-
-  def test_env_key_app_maps_to_app_port
+  def test_env_key_uses_uppercased_name
     assert_equal "APP_PORT", Portkey::EnvrcWriter.env_key("app")
-  end
-
-  def test_env_key_redis_maps_to_redis_port
+    assert_equal "POSTGRES_PORT", Portkey::EnvrcWriter.env_key("postgres")
     assert_equal "REDIS_PORT", Portkey::EnvrcWriter.env_key("redis")
-  end
-
-  def test_env_key_custom_service
     assert_equal "MEMCACHED_PORT", Portkey::EnvrcWriter.env_key("memcached")
     assert_equal "OTHER_PORT", Portkey::EnvrcWriter.env_key("other")
-  end
-
-  # key deduplication
-
-  def test_port_entries_deduplicates_keys
-    data = { "path" => "/tmp", "postgres" => 5432, "pg" => 9999 }
-    entries = Portkey::EnvrcWriter.port_entries(data, export: true)
-
-    assert_equal 1, entries.size
-    assert_equal "export DB_PORT=5432", entries["DB_PORT"]
   end
 
   # merge_content

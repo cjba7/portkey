@@ -4,16 +4,10 @@ require "open3"
 
 module Portkey
   module EnvrcWriter
-    SERVICE_KEY_MAP = {
-      "postgres" => "DB_PORT",
-      "postgresql" => "DB_PORT",
-      "pg" => "DB_PORT"
-    }.freeze
-
     module_function
 
     def env_key(service_name)
-      SERVICE_KEY_MAP.fetch(service_name, "#{service_name.upcase}_PORT")
+      "#{service_name.upcase}_PORT"
     end
 
     def port_entries(project_data, export: true)
