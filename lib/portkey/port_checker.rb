@@ -22,8 +22,8 @@ module Portkey
       bound_ports.include?(port)
     end
 
-    def check_ports(ports)
-      currently_bound = bound_ports
+    def check_ports(ports, &block)
+      currently_bound = block ? block.call : bound_ports
       ports.map do |port|
         { port: port, bound: currently_bound.include?(port) }
       end
