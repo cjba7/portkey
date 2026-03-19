@@ -30,7 +30,7 @@ module Portkey
 
     def mode
       m = load["mode"]
-      VALID_MODES.include?(m) ? m : "envrc"
+      VALID_MODES.include?(m) ? m : "dotenv"
     end
 
     def projects
@@ -61,7 +61,7 @@ module Portkey
       save(data)
     end
 
-    def init_config(mode: "envrc")
+    def init_config(mode: "dotenv")
       if File.exist?(@config_path)
         raise Portkey::Error, "Config already exists at #{@config_path}"
       end
@@ -93,8 +93,8 @@ module Portkey
         # Each project gets a block of ports for its services.
         # Run `portkey add <name>` to auto-assign ports, or edit this file manually.
         #
-        # mode: envrc   — write .envrc files (for direnv, default)
-        # mode: dotenv  — write .env files (for dotenv-compatible tools)
+        # mode: dotenv  — write .env files (default)
+        # mode: envrc   — write .envrc files (for direnv)
         # mode: both    — write both .envrc and .env files
 
         mode: #{mode}

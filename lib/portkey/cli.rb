@@ -49,16 +49,16 @@ module Portkey
 
     def cmd_init
       @stdout.puts "Select output mode:"
-      @stdout.puts "  1. envrc  — write .envrc files for direnv (default)"
-      @stdout.puts "  2. dotenv — write .env files for dotenv-compatible tools"
+      @stdout.puts "  1. dotenv — write .env files (default)"
+      @stdout.puts "  2. envrc  — write .envrc files for direnv"
       @stdout.puts "  3. both   — write both .envrc and .env files"
       @stdout.print "Choice [1]: "
 
       choice = @stdin.gets&.strip
       mode = case choice
-      when "2", "dotenv" then "dotenv"
-      when "3", "both"   then "both"
-      else "envrc"
+      when "2", "envrc" then "envrc"
+      when "3", "both"  then "both"
+      else "dotenv"
       end
 
       config.init_config(mode: mode)

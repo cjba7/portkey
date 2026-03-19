@@ -134,7 +134,7 @@ class ConfigTest < Minitest::Test
       assert File.exist?(config.config_path)
       content = File.read(config.config_path)
       assert_includes content, "projects:"
-      assert_includes content, "mode: envrc"
+      assert_includes content, "mode: dotenv"
       assert_includes content, "# Example:"
     end
   end
@@ -169,10 +169,10 @@ class ConfigTest < Minitest::Test
     end
   end
 
-  def test_mode_defaults_to_envrc
+  def test_mode_defaults_to_dotenv
     with_temp_config do |config, _dir|
       config.save("projects" => {})
-      assert_equal "envrc", config.mode
+      assert_equal "dotenv", config.mode
     end
   end
 
@@ -186,7 +186,7 @@ class ConfigTest < Minitest::Test
   def test_mode_defaults_on_invalid_value
     with_temp_config do |config, _dir|
       config.save("mode" => "garbage", "projects" => {})
-      assert_equal "envrc", config.mode
+      assert_equal "dotenv", config.mode
     end
   end
 end
