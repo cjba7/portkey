@@ -1,8 +1,8 @@
 class Portkey < Formula
   desc "System-wide port registry for developers running multiple projects"
   homepage "https://github.com/cjba7/portkey"
-  url "https://github.com/cjba7/portkey/archive/refs/tags/v1.0.1.tar.gz"
-  sha256 "9a6bdc65835422a53351381d16f74bbd39b3825614242e5479262a53a602cea1"
+  url "https://github.com/cjba7/portkey/archive/refs/tags/v1.1.0.tar.gz"
+  sha256 "e8a01851799fa76d29511ec88143f24c79235a078377cc1957e363b48e2839c3"
   license "MIT"
 
   depends_on "direnv" => :recommended
