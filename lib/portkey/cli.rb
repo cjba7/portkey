@@ -24,6 +24,7 @@ module Portkey
       when "show"    then cmd_show
       when "check"   then cmd_check
       when "status"  then cmd_status
+      when "doctor"  then cmd_doctor
       when "--version", "-v"
         @stdout.puts "portkey #{Portkey::VERSION}"
       when "--help", "-h", nil
@@ -250,6 +251,82 @@ module Portkey
       end
     end
 
+    def cmd_doctor
+      projects = config.projects
+      issues = []
+
+      # Check config file exists
+      unless File.exist?(config.config_path)
+        issues << "Config file not found at #{config.config_path}. Run `portkey init`."
+        issues.each { |i| @stdout.puts "  #{i}" }
+        exit 1
+      end
+
+      # Check direnv if any project uses envrc mode
+      needs_direnv = projects.any? { |name, _| %w[envrc both].include?(config.mode_for(name)) }
+      if needs_direnv
+        direnv_found = system("which direnv > /dev/null 2>&1")
+        issues << "direnv not found in PATH (needed for envrc/both mode)" unless direnv_found
+      end
+
+      # Check each project
+      projects.each do |name, data|
+        path = data["path"]
+        unless path
+          issues << "#{name}: no path defined"
+          next
+        end
+
+        expanded = File.expand_path(path)
+        unless Dir.exist?(expanded)
+          issues << "#{name}: directory not found at #{expanded}"
+          next
+        end
+
+        # Check env files are up to date
+        mode = config.mode_for(name)
+        expected_entries = EnvrcWriter.port_entries(data, export: true)
+
+        if %w[envrc both].include?(mode)
+          envrc_path = File.join(expanded, ".envrc")
+          if File.exist?(envrc_path)
+            content = File.read(envrc_path)
+            expected_entries.each do |key, line|
+              unless content.include?(line)
+                issues << "#{name}: .envrc is out of date (#{key} mismatch). Run `portkey apply #{name}`."
+                break
+              end
+            end
+          else
+            issues << "#{name}: .envrc not found. Run `portkey apply #{name}`."
+          end
+        end
+
+        if %w[dotenv both].include?(mode)
+          env_path = File.join(expanded, ".env")
+          dotenv_entries = EnvrcWriter.port_entries(data, export: false)
+          if File.exist?(env_path)
+            content = File.read(env_path)
+            dotenv_entries.each do |key, line|
+              unless content.include?(line)
+                issues << "#{name}: .env is out of date (#{key} mismatch). Run `portkey apply #{name}`."
+                break
+              end
+            end
+          else
+            issues << "#{name}: .env not found. Run `portkey apply #{name}`."
+          end
+        end
+      end
+
+      if issues.empty?
+        @stdout.puts "All good. #{projects.size} project#{"s" unless projects.size == 1} checked."
+      else
+        issues.each { |i| @stdout.puts "  #{i}" }
+        exit 1
+      end
+    end
+
     def print_help
       @stdout.puts <<~HELP
         Usage: portkey <command> [options]
@@ -264,6 +341,7 @@ module Portkey
           apply --all       Write env file(s) into all registered project directories
           check             Scan all registered ports for conflicts
           status            Show which registered ports are in use vs free
+          doctor            Check config, paths, and env files are in sync
 
         Options:
           --version, -v     Show version
