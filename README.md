@@ -1,80 +1,57 @@
 # portkey
 
-A system-wide port registry for developers running multiple projects concurrently. portkey reads a central `~/.portkey.yml` config file and writes environment files (`.envrc`, `.env`, or both) into each project directory, so each project gets stable, non-conflicting port assignments as environment variables.
-
-No more port conflicts between your Rails apps, Postgres instances, Redis servers, or any other services.
-
-## Prerequisites
-
-- **Ruby** >= 3.2
-- **[direnv](https://direnv.net/)** — required if using `envrc` mode (default)
+A system-wide port registry for developers running multiple projects concurrently. portkey assigns stable, non-conflicting port numbers per project and writes them as environment variables into `.env` or `.envrc` files.
 
 ## Installation
 
-### Homebrew
-
 ```bash
-brew tap cjba7/portkey
-brew install portkey
+brew tap cjba7/portkey && brew install portkey
 ```
 
-The tap lives at [github.com/cjba7/homebrew-portkey](https://github.com/cjba7/homebrew-portkey).
-
-### From source
-
-```bash
-git clone https://github.com/cjba7/portkey.git
-cd portkey
-# Run directly:
-ruby -Ilib bin/portkey --help
-# Or add bin/ to your PATH
-```
+Or from source: `git clone https://github.com/cjba7/portkey.git && cd portkey && ruby -Ilib bin/portkey --help`
 
 ## Quick start
 
 ```bash
-# 1. Create the config file
-portkey init
-
-# 2. cd into your project and register it
-cd ~/code/myapp
-portkey add myapp
-
-# 3. That's it! portkey auto-assigned ports and wrote the env file(s).
-#    Your shell now has APP_PORT, POSTGRES_PORT, REDIS_PORT set.
-echo $APP_PORT   # => 3000
-echo $POSTGRES_PORT    # => 5432
-echo $REDIS_PORT # => 6379
-
-# 4. Register another project
-cd ~/code/otherapp
-portkey add otherapp
-# Ports are automatically incremented by 10:
-# APP_PORT=3010, POSTGRES_PORT=5442, REDIS_PORT=6389
+portkey init                        # create ~/.portkey.yml
+cd ~/code/myapp && portkey add myapp  # register project, auto-assign ports
+portkey list                        # see all projects and ports
 ```
+
+After `portkey add`, your project directory has a `.env` (or `.envrc`) with:
+
+```
+APP_PORT=3000
+POSTGRES_PORT=5432
+REDIS_PORT=6379
+```
+
+Each new project gets ports incremented by 10, so they never conflict.
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `portkey init` | Generate `~/.portkey.yml` (prompts for output mode) |
-| `portkey list` | List all projects and their assigned ports |
-| `portkey add <name>` | Add current directory as a project with auto-assigned ports |
-| `portkey remove <name>` | Remove a project from the registry |
-| `portkey apply <name>` | Write env file(s) into the project's directory |
-| `portkey apply --all` | Write env file(s) into all registered project directories |
-| `portkey check` | Scan all registered ports for conflicts with currently bound ports |
-| `portkey status` | Show which registered ports are currently in use vs free |
-| `portkey --version` | Show version |
-| `portkey --help` | Show help |
+```
+portkey init                  Create ~/.portkey.yml (prompts for output mode)
+portkey add <name>            Register current directory with auto-assigned ports
+portkey add <name> --services app,postgres,redis,sidekiq
+                              Register with specific services
+portkey remove <name>         Remove a project
+portkey list                  List all projects and ports
+portkey show <name>           Print env vars for a project (pipeable)
+portkey show <name> --export  Print with export prefix for shell eval
+portkey apply <name>          Write env file(s) into the project directory
+portkey apply --all           Write env file(s) for all projects
+portkey status                Show which ports are in use vs free
+portkey check                 Scan for port conflicts
+portkey doctor                Verify config, paths, and env files are in sync
+```
 
-## Config file
+## Config
 
 Location: `~/.portkey.yml`
 
 ```yaml
-# Output mode: envrc (default), dotenv, or both
-mode: envrc
+mode: dotenv  # default mode: dotenv, envrc, or both
 
 projects:
   myapp:
@@ -83,130 +60,24 @@ projects:
     postgres: 5432
     redis: 6379
 
-  otherapp:
-    path: ~/code/otherapp
+  frontend:
+    path: ~/code/frontend
+    mode: envrc  # per-project override
     app: 3010
-    postgres: 5442
-    redis: 6389
-    memcached: 11211
 ```
 
-### mode
+## Documentation
 
-Controls which files `portkey apply` writes into each project directory:
-
-| Mode | File(s) written | Use case |
-|---|---|---|
-| `envrc` | `.envrc` with `export KEY=VALUE` | direnv users (default) |
-| `dotenv` | `.env` with `KEY=VALUE` | Projects using dotenv gems/libraries |
-| `both` | Both `.envrc` and `.env` | Mixed tooling |
-
-`portkey init` prompts you to choose a mode.
-
-### projects
-
-Each project has:
-- **path** — absolute or `~`-relative path to the project root
-- **service keys** — any number of `service_name: port` pairs
-
-You can add any services you like. The three defaults (`app`, `postgres`, `redis`) are auto-assigned by `portkey add`. Additional services can be added manually.
-
-## What gets written
-
-For each project, `portkey apply` writes env file(s) based on the configured mode.
-
-**`.envrc`** (envrc / both modes):
-```bash
-# Generated by portkey — do not edit manually
-# Project: myapp
-
-export APP_PORT=3000
-export POSTGRES_PORT=5432
-export REDIS_PORT=6379
-```
-
-**`.env`** (dotenv / both modes):
-```
-# Generated by portkey — do not edit manually
-# Project: myapp
-
-APP_PORT=3000
-POSTGRES_PORT=5432
-REDIS_PORT=6379
-```
-
-The environment variable name is derived from the service key:
-The environment variable name is simply `UPPERCASED_NAME_PORT` (e.g., `app` → `APP_PORT`, `postgres` → `POSTGRES_PORT`, `redis` → `REDIS_PORT`).
-
-Each key appears only once per file — if two services map to the same env var, the first wins.
-
-In `envrc` or `both` modes, portkey runs `direnv allow` automatically after writing.
-
-## How it works with direnv
-
-In `envrc` mode (default), portkey writes `export KEY=VALUE` lines directly to `.envrc`, which direnv natively watches. When you `cd` into a project directory, direnv automatically loads the exports.
-
-## Using with Rails
-
-### database.yml
-
-```yaml
-# config/database.yml
-development:
-  adapter: postgresql
-  host: localhost
-  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
-  database: myapp_development
-```
-
-### Redis / Sidekiq
-
-```yaml
-# config/redis.yml
-development:
-  url: redis://localhost:<%= ENV.fetch("REDIS_PORT", 6379) %>/0
-```
-
-### Puma / server port
-
-```ruby
-# config/puma.rb
-port ENV.fetch("APP_PORT", 3000)
-```
-
-### Docker Compose
-
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-  redis:
-    image: redis:7
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-```
-
-## Port auto-assignment
-
-When you run `portkey add <name>`, it:
-
-1. Reads all existing port assignments from `~/.portkey.yml`
-2. For each default service (`app`, `postgres`, `redis`), finds the next available port starting from the base (3000, 5432, 6379) and incrementing by 10
-3. Skips any port that is already assigned to another project or currently bound on the system
-4. Writes the new project to `~/.portkey.yml`
-5. Writes env file(s) per the configured mode and runs `direnv allow` (in envrc/both modes)
-
-The increment of 10 leaves room for services that use multiple consecutive ports.
+- [Configuration](docs/configuration.md) — modes, per-project overrides, custom services
+- [Commands](docs/commands.md) — full command reference with examples
+- [Docker & Rails](docs/integrations.md) — using portkey with Docker Compose, Rails, Puma, Redis
+- [How it works](docs/how-it-works.md) — port assignment, env file merging, direnv integration
 
 ## Contributing
 
 1. Fork the repo
-2. Create your feature branch (`git checkout -b my-feature`)
-3. Run the tests: `ruby -Ilib -Itest -e 'Dir.glob("test/*_test.rb").each { |f| require_relative f }'`
-4. Commit your changes
-5. Push to the branch and open a pull request
+2. Run tests: `ruby -Ilib -Itest -e 'Dir.glob("test/*_test.rb").each { |f| require_relative f }'`
+3. Open a pull request
 
 ## License
 
