@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Portkey
-  VERSION = "1.0.1"
+  VERSION = "1.1.0"
 
   class Error < StandardError; end
 end
