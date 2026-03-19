@@ -183,6 +183,44 @@ class ConfigTest < Minitest::Test
     end
   end
 
+  def test_mode_for_uses_project_mode_when_set
+    with_temp_config do |config, _dir|
+      config.save(
+        "mode" => "dotenv",
+        "projects" => {
+          "frontend" => { "path" => "/tmp", "mode" => "envrc", "app" => 3000 },
+          "backend" => { "path" => "/tmp", "app" => 3010 }
+        }
+      )
+      assert_equal "envrc", config.mode_for("frontend")
+      assert_equal "dotenv", config.mode_for("backend")
+    end
+  end
+
+  def test_mode_for_falls_back_to_root_mode
+    with_temp_config do |config, _dir|
+      config.save("mode" => "both", "projects" => { "myapp" => { "app" => 3000 } })
+      assert_equal "both", config.mode_for("myapp")
+    end
+  end
+
+  def test_mode_for_ignores_invalid_project_mode
+    with_temp_config do |config, _dir|
+      config.save(
+        "mode" => "dotenv",
+        "projects" => { "myapp" => { "mode" => "garbage", "app" => 3000 } }
+      )
+      assert_equal "dotenv", config.mode_for("myapp")
+    end
+  end
+
+  def test_mode_for_unknown_project_uses_root
+    with_temp_config do |config, _dir|
+      config.save("mode" => "envrc", "projects" => {})
+      assert_equal "envrc", config.mode_for("nonexistent")
+    end
+  end
+
   def test_mode_defaults_on_invalid_value
     with_temp_config do |config, _dir|
       config.save("mode" => "garbage", "projects" => {})

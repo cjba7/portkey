@@ -13,7 +13,7 @@ module Portkey
     def port_entries(project_data, export: true)
       entries = {}
       project_data.each do |key, value|
-        next if key == "path"
+        next if key == "path" || key == "mode"
         next unless value.is_a?(Integer)
 
         k = env_key(key)

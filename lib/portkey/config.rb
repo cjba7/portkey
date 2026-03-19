@@ -41,6 +41,14 @@ module Portkey
       projects[name]
     end
 
+    def mode_for(name)
+      proj = project(name)
+      return mode unless proj
+
+      m = proj["mode"]
+      VALID_MODES.include?(m) ? m : mode
+    end
+
     def add_project(name, attrs)
       data = load
       if data["projects"].key?(name)

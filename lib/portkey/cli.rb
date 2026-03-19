@@ -76,11 +76,12 @@ module Portkey
       projects.each do |name, data|
         @stdout.puts name
         data.each do |key, value|
-          next if key == "path"
+          next if key == "path" || key == "mode"
           @stdout.puts "  #{key.ljust(12)} #{value}"
         end
         path = data["path"]
         @stdout.puts "  #{"path".ljust(12)} #{path}" if path
+        @stdout.puts "  #{"mode".ljust(12)} #{config.mode_for(name)}"
         @stdout.puts ""
       end
     end
@@ -102,7 +103,7 @@ module Portkey
         @stdout.puts "  #{service.ljust(12)} #{port}"
       end
 
-      written = EnvrcWriter.write(name, config.project(name), mode: config.mode)
+      written = EnvrcWriter.write(name, config.project(name), mode: config.mode_for(name))
       written.each { |p| @stdout.puts "Wrote #{p}" }
     end
 
@@ -118,8 +119,6 @@ module Portkey
     end
 
     def cmd_apply
-      mode = config.mode
-
       if @argv.include?("--all")
         projects = config.projects
         if projects.empty?
@@ -128,7 +127,7 @@ module Portkey
         end
 
         projects.each do |name, data|
-          written = EnvrcWriter.write(name, data, mode: mode)
+          written = EnvrcWriter.write(name, data, mode: config.mode_for(name))
           written.each { |p| @stdout.puts "Wrote #{p}" }
         end
       else
@@ -143,7 +142,7 @@ module Portkey
           raise Portkey::Error, "Project '#{name}' not found"
         end
 
-        written = EnvrcWriter.write(name, data, mode: mode)
+        written = EnvrcWriter.write(name, data, mode: config.mode_for(name))
         written.each { |p| @stdout.puts "Wrote #{p}" }
       end
     end
@@ -174,7 +173,7 @@ module Portkey
       # Check for conflicts with currently bound ports
       projects.each do |name, data|
         data.each do |key, value|
-          next if key == "path"
+          next if key == "path" || key == "mode"
           next unless value.is_a?(Integer)
 
           if bound.include?(value)
@@ -204,7 +203,7 @@ module Portkey
       projects.each do |name, data|
         @stdout.puts name
         data.each do |key, value|
-          next if key == "path"
+          next if key == "path" || key == "mode"
           next unless value.is_a?(Integer)
 
           in_use = bound.include?(value)
