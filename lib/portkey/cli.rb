@@ -21,6 +21,7 @@ module Portkey
       when "add"     then cmd_add
       when "remove"  then cmd_remove
       when "apply"   then cmd_apply
+      when "show"    then cmd_show
       when "check"   then cmd_check
       when "status"  then cmd_status
       when "--version", "-v"
@@ -129,6 +130,23 @@ module Portkey
 
       config.remove_project(name)
       @stdout.puts "Removed project '#{name}'"
+    end
+
+    def cmd_show
+      name = @argv.shift
+      unless name
+        @stderr.puts "Usage: portkey show <name> [--export]"
+        exit 1
+      end
+
+      data = config.project(name)
+      unless data
+        raise Portkey::Error, "Project '#{name}' not found"
+      end
+
+      export = @argv.include?("--export")
+      entries = EnvrcWriter.port_entries(data, export: export)
+      entries.each_value { |line| @stdout.puts line }
     end
 
     def cmd_apply
@@ -241,6 +259,7 @@ module Portkey
           list              List all projects and their assigned ports
           add <name>        Add current directory as a project with auto-assigned ports
           remove <name>     Remove a project from the registry
+          show <name>       Print env vars for a project (use --export for shell format)
           apply <name>      Write env file(s) into the project's directory
           apply --all       Write env file(s) into all registered project directories
           check             Scan all registered ports for conflicts
