@@ -89,12 +89,25 @@ module Portkey
     def cmd_add
       name = @argv.shift
       unless name
-        @stderr.puts "Usage: portkey add <name>"
+        @stderr.puts "Usage: portkey add <name> [--services app,postgres,redis,...]"
         exit 1
       end
 
+      services = nil
+      if (idx = @argv.index("--services"))
+        services = @argv[idx + 1]&.split(",")&.map(&:strip)
+        unless services && !services.empty?
+          @stderr.puts "Usage: --services app,postgres,redis,..."
+          exit 1
+        end
+      end
+
       registry = Registry.new(config: config)
-      ports = registry.assign_ports
+      ports = if services
+        registry.assign_ports(services: services)
+      else
+        registry.assign_ports
+      end
       attrs = { "path" => Dir.pwd }.merge(ports)
 
       config.add_project(name, attrs)
