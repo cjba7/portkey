@@ -15,6 +15,16 @@ class EnvrcWriterTest < Minitest::Test
     assert_equal "OTHER_PORT", Portkey::EnvrcWriter.env_key("other")
   end
 
+  # port_entries excludes reserved (non-port) keys
+
+  def test_port_entries_excludes_colour_path_and_mode
+    data = { "path" => "/tmp/x", "mode" => "envrc", "colour" => "#4f46e5", "app" => 3000 }
+    entries = Portkey::EnvrcWriter.port_entries(data, export: false)
+
+    assert_equal({ "APP_PORT" => "APP_PORT=3000" }, entries)
+    refute(entries.keys.any? { |k| k.include?("COLOUR") })
+  end
+
   # merge_content
 
   def test_merge_replaces_existing_key

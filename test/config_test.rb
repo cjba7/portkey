@@ -128,6 +128,27 @@ class ConfigTest < Minitest::Test
     end
   end
 
+  def test_set_project_value_sets_and_persists
+    with_temp_config do |config, _dir|
+      config.save("projects" => { "myapp" => { "path" => "/tmp", "app" => 3000 } })
+      config.set_project_value("myapp", "colour", "#4f46e5")
+
+      assert_equal "#4f46e5", config.project("myapp")["colour"]
+      # Existing values are left untouched.
+      assert_equal 3000, config.project("myapp")["app"]
+    end
+  end
+
+  def test_set_project_value_raises_for_unknown_project
+    with_temp_config do |config, _dir|
+      config.save("projects" => {})
+
+      assert_raises(Portkey::Error) do
+        config.set_project_value("ghost", "colour", "#4f46e5")
+      end
+    end
+  end
+
   def test_init_config_creates_file_with_default_mode
     with_temp_config do |config, _dir|
       config.init_config
