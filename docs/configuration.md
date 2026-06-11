@@ -67,6 +67,27 @@ All services use `UPPERCASED_NAME_PORT`:
 - `redis` → `REDIS_PORT`
 - `sidekiq` → `SIDEKIQ_PORT`
 
+## Colours
+
+Each project can carry a `colour` (hex) that tints its iTerm2 tab and the
+Claude Code status-line badge. `portkey add` auto-assigns a stable, distinct
+colour from a built-in palette; override it with `--colour`, the `colours`
+command, or by editing `~/.portkey.yml`:
+
+```yaml
+projects:
+  api:
+    path: ~/code/api
+    colour: "#4f46e5"    # hex; "R G B" triples are also accepted
+    app: 3000
+```
+
+The colour lives only here — there's no separate rules file. Run
+[`portkey setup`](integrations.md#iterm2-tab-colours--claude-code-status-badge)
+once to wire up the shell hook and status line; they call `portkey resolve` to
+look the colour up by longest-matching path prefix. Projects without a `colour`
+simply get no tint.
+
 ## Port assignment
 
 Ports are assigned from base values, incrementing by 10 per project:

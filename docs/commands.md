@@ -29,7 +29,14 @@ With custom services:
 portkey add myapp --services app,postgres,redis,sidekiq
 ```
 
-This auto-assigns ports, writes to `~/.portkey.yml`, and runs `portkey apply`.
+With an explicit colour (otherwise one is auto-assigned):
+
+```bash
+portkey add myapp --colour "#4f46e5"
+```
+
+This auto-assigns ports, picks a tab colour, writes to `~/.portkey.yml`, and
+runs `portkey apply`.
 
 ## portkey remove
 
@@ -49,6 +56,7 @@ myapp
   redis        6379
   path         ~/code/myapp
   mode         dotenv
+  colour       #4f46e5
 ```
 
 ## portkey show
@@ -109,6 +117,58 @@ Scan for conflicts — between projects or with currently bound ports:
 ```bash
 $ portkey check
 No port conflicts found.
+```
+
+## portkey setup
+
+Wire the tab-colour shell hook and the Claude Code status line into your
+environment, idempotently and with backups:
+
+```bash
+$ portkey setup
+Added portkey block to /Users/you/.zshrc
+Set Claude Code statusLine in /Users/you/.claude/settings.json
+
+Done. Restart your shell (or `source` your rc) to start colouring tabs.
+```
+
+Detects your shell from `$SHELL`; pass `zsh` or `bash` to override. See
+[Integrations → tab colours](integrations.md#iterm2-tab-colours--claude-code-status-badge).
+
+## portkey colours
+
+List project colours, show one, or set one:
+
+```bash
+# list every project's colour
+$ portkey colours
+  myapp            #4f46e5
+  frontend         #10b981
+
+# show a project's colour
+$ portkey colours myapp
+myapp: #4f46e5
+
+# set a project's colour (hex or "R G B")
+$ portkey colours myapp "#ef4444"
+Set myapp colour to #ef4444
+```
+
+## portkey resolve / statusline / shell-init
+
+Plumbing used by the shell integration — you normally won't call these
+directly:
+
+```bash
+# colour for a directory (default: cwd), as "R G B label", or nothing
+$ portkey resolve ~/code/myapp
+79 70 229 myapp
+
+# render the Claude Code status line (reads session JSON on stdin)
+$ portkey statusline
+
+# print the tab-colour hook for your shell
+$ portkey shell-init zsh
 ```
 
 ## portkey doctor

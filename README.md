@@ -43,6 +43,9 @@ portkey apply <name>          Write env file(s) into the project directory
 portkey apply --all           Write env file(s) for all projects
 portkey status                Show which ports are in use vs free
 portkey check                 Scan for port conflicts
+portkey setup                 Wire up per-project tab colours + Claude Code badge
+portkey colours               List project colours
+portkey colours <name> <#hex> Set a project's tab/badge colour
 portkey doctor                Verify config, paths, and env files are in sync
 ```
 
@@ -56,6 +59,7 @@ mode: dotenv  # default mode: dotenv, envrc, or both
 projects:
   myapp:
     path: ~/code/myapp
+    colour: "#4f46e5"  # tints the iTerm2 tab + Claude Code status badge
     app: 3000
     postgres: 5432
     redis: 6379
@@ -70,7 +74,7 @@ projects:
 
 - [Configuration](docs/configuration.md) — modes, per-project overrides, custom services
 - [Commands](docs/commands.md) — full command reference with examples
-- [Docker & Rails](docs/integrations.md) — using portkey with Docker Compose, Rails, Puma, Redis
+- [Integrations](docs/integrations.md) — Docker Compose, Rails, Puma, plus per-project iTerm2 tab colours & Claude Code status badge
 - [How it works](docs/how-it-works.md) — port assignment, env file merging, direnv integration
 
 ## Contributing
