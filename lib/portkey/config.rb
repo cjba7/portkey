@@ -69,6 +69,16 @@ module Portkey
       save(data)
     end
 
+    def set_project_value(name, key, value)
+      data = load
+      unless data["projects"].key?(name)
+        raise Portkey::Error, "Project '#{name}' not found"
+      end
+
+      data["projects"][name][key] = value
+      save(data)
+    end
+
     def init_config(mode: "dotenv")
       if File.exist?(@config_path)
         raise Portkey::Error, "Config already exists at #{@config_path}"
@@ -107,17 +117,24 @@ module Portkey
 
         mode: #{mode}
 
+        # An optional `colour` per project (hex) tints its iTerm2 tab and the
+        # Claude Code status-line badge. `portkey add` auto-assigns one;
+        # override it here or with `portkey colours <name> <#hex>`. Run
+        # `portkey setup` once to wire up the shell hook and status line.
+        #
         # Example:
         #
         # projects:
         #   myapp:
         #     path: ~/code/myapp
+        #     colour: "#4f46e5"
         #     app: 3000
         #     postgres: 5432
         #     redis: 6379
         #
         #   otherapp:
         #     path: ~/code/otherapp
+        #     colour: "#10b981"
         #     app: 3010
         #     postgres: 5442
         #     redis: 6389
