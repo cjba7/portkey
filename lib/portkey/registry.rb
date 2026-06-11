@@ -36,7 +36,7 @@ module Portkey
       ports = Set.new
       @config.projects.each_value do |proj|
         proj.each do |key, value|
-          next if key == "path" || key == "mode"
+          next if Portkey::RESERVED_KEYS.include?(key)
           ports.add(value) if value.is_a?(Integer)
         end
       end
@@ -49,7 +49,7 @@ module Portkey
 
       @config.projects.each do |project_name, proj|
         proj.each do |key, value|
-          next if key == "path" || key == "mode"
+          next if Portkey::RESERVED_KEYS.include?(key)
           next unless value.is_a?(Integer)
 
           if seen.key?(value)
